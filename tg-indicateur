@@ -7,7 +7,7 @@ export RTSERVER=https://rt.giprecia.fr/rt/
 
 OPTERR=0 #Permet d'eviter le message d'erreur de getopts
 day=$(date "+%d/%m/%Y") 
-fday=$(date "+%d-%m-%Y-%H-%M")
+fday=$(date "+%d-%m-%Y")
 listStatus="new open stalled"
 
 #Coloration
@@ -35,8 +35,9 @@ dump(){
 } 
 
 export(){
-	#Supprime la coloration pour sortie dans un fichier
-        traitement | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g" | sed -r "s/:/;/g" | tee indicateurs_$fday.csv
+	#Supprime la coloration pour sortie dans un fichier et convertie la sortie en csv
+	echo -e $ROSE"Le fichier se trouvera Ã  l'emplacement suivant : /home/ftp/share/Indicateurs/indicateurs_"$fday".csv"$NORMAL";
+        traitement | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g" | sed -r "s/:/;/g" | tee /home/ftp/share/Indicateurs/indicateurs_$fday.csv
 
 }
 
@@ -103,7 +104,7 @@ queue=$1
 
 
 
-# Pas de paramètre on lance le script en affichage directement
+# Pas de paramï¿½tre on lance le script en affichage directement
 [[ $# -lt 1 ]] && traitement 
 
 # on verifie les options  
