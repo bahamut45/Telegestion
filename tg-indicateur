@@ -1,0 +1,129 @@
+#!/bin/bash 
+
+######## Declaration des variables ########
+export RTUSER=njoubert
+export RTPASSWD=ninja21
+export RTSERVER=https://rt.giprecia.fr/rt/
+
+OPTERR=0 #Permet d'eviter le message d'erreur de getopts
+day=$(date "+%d/%m/%Y") 
+fday=$(date "+%d-%m-%Y-%H-%M")
+listStatus="new open stalled"
+
+#Coloration
+VERT="\\033[1;32m"
+NORMAL="\\033[0;39m"
+ROUGE="\\033[1;31m"
+ROSE="\\033[1;35m"
+BLEU="\\033[1;34m"
+BLANC="\\033[0;02m"
+BLANCLAIR="\\033[1;08m"
+JAUNE="\\033[1;33m"
+CYAN="\\033[1;36m"
+
+usage(){ 
+    echo "Usage: ./indicateur-v2 [options]" 
+    echo "--help ou -h : afficher l'aide" 
+    echo "--version ou -v : afficher la version"
+    echo "--dump ou -d : extraction sans coloration" 
+    echo "--export ou -e : export en csv les indicateurs avec le nom de fichier suivant [indicateurs_$fday.csv]"
+} 
+
+dump(){ 
+	#Supprime la coloration pour sortie dans un fichier
+	traitement | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g" 
+} 
+
+export(){
+	#Supprime la coloration pour sortie dans un fichier
+        traitement | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g" | sed -r "s/:/;/g" | tee indicateurs_$fday.csv
+
+}
+
+traitement(){
+	echo -e $ROSE"Indicateur du :"$day"$NORMAL";
+	nobody
+	file '01 - En attente de PEC'
+	file '02 - Incidents'
+	file '02.1 - Incidents ProActifs'
+	file '03 - SFR (Incidents)'
+	file '04 - Travaux Niveau I'
+	file '05 - Travaux Niveau II'	
+}
+
+
+nobody(){
+queryFile="( Queue = '01 - En attente de PEC' OR Queue = '02 - Incidents' OR Queue = '03 - SFR (Incidents)' OR Queue = '04 - Travaux Niveau I' OR Queue = '05 - Travaux Niveau II' OR Queue = '02.1 - Incidents ProActifs' )"
+	echo -e "$CYAN""Nobody :""$NORMAL";
+	echo -e "$VERT""Total : "$ROUGE"$(rt ls -i "Owner = 'nobody' AND (Status = 'new' OR Status = 'open' OR Status = 'stalled') AND $queryFile"| wc -l)""$NORMAL";
+	for i in $listStatus
+	do
+		if [ $i == 'new' ]; then status="Nouveau : "; elif [ $i == 'open' ]; then status="Ouvert : "; else status="Stagnant : ";fi
+		echo -e "$VERT""$status"$ROUGE"$(rt ls -i "Owner = 'nobody' AND Status = $i AND $queryFile "| wc -l)""$NORMAL";	
+	done
+	echo -e "$CYAN""Stagnant avec Motif Delai :""$NORMAL";
+	echo -e "$VERT""Total : "$ROUGE"$(rt ls -i "Owner = 'nobody' AND Status = 'stalled' AND $queryFile AND 'CF.{MotifDelai}' IS NOT NULL"| wc -l)""$NORMAL";
+
+declare -A listMD
+listMD=(["A"]="Attente matériel" ["B"]="Attente Periode Creuse" ["C"]="Attente réponse établissement" ["D"]="Attente réponse RECIA" ["E"]="Attente retour niveau 2" ["F"]="Déplacement Programmé" ["G"]="En cours de développement" ["H"]="Intervention programmée")
+	for elem in ${!listMD[*]}
+	do  
+		text=$(echo ${listMD[${elem}]} | iconv -f utf8 -t ascii//TRANSLIT) #Soucis d'accent 
+		echo -e "$VERT"$text" : "$ROUGE"$(rt ls -i "Owner = 'nobody' AND Status = 'stalled' AND $queryFile AND 'CF.{MotifDelai}' = '${listMD[${elem}]}'"| wc -l)""$NORMAL";
+ 	done
+}
+
+file(){
+tg="( Owner = 'cblondeau' OR Owner = 'njoubert' OR Owner = 'ssanchez' OR Owner = 'dgelve' OR Owner = 'lleminoux' OR Owner = 'cfonck' OR Owner = 'stellier')"
+recia="(Owner != 'cblondeau' AND Owner != 'njoubert' AND Owner != 'ssanchez' AND Owner != 'dgelve' AND Owner != 'lleminoux' AND Owner != 'cfonck' AND Owner != 'stellier' AND Owner !='nobody')"
+queue=$1
+	echo -e "$CYAN""File - $queue :""$NORMAL";
+	echo -e "$VERT""Total : "$ROUGE"$(rt ls -i "Queue = '$queue' AND (Status = 'new' OR Status = 'open' OR Status = 'stalled')" | wc -l)""$NORMAL";
+        for i in $listStatus
+        do
+                if [ $i == 'new' ]; then status="Nouveau : "; elif [ $i == 'open' ]; then status="Ouvert : "; else status="Stagnant : ";fi
+                echo -e "$VERT""$status"$ROUGE"$(rt ls -i "Queue = '$queue' AND Status = $i "| wc -l)""$NORMAL";
+        done
+        for i in $listStatus
+        do
+                if [ $i == 'new' ]; then status="Nobody - Nouveau : "; elif [ $i == 'open' ]; then status="Nobody - Ouvert : "; else status="Nobody - Stagnant : ";fi
+                echo -e "$BLEU""$status"$ROUGE"$(rt ls -i "Owner = 'nobody' AND Queue = '$queue' AND Status = $i "| wc -l)""$NORMAL";
+        done
+        for i in $listStatus
+        do
+                if [ $i == 'new' ]; then status="TG - Nouveau : "; elif [ $i == 'open' ]; then status="TG - Ouvert : "; else status="TG - Stagnant : ";fi
+                echo -e "$ROSE""$status"$ROUGE"$(rt ls -i "$tg AND Queue = '$queue' AND Status = $i "| wc -l)""$NORMAL";
+        done
+        for i in $listStatus
+        do
+                if [ $i == 'new' ]; then status="Recia - Nouveau : "; elif [ $i == 'open' ]; then status="Recia - Ouvert : "; else status="Recia - Stagnant : ";fi
+                echo -e "$JAUNE""$status"$ROUGE"$(rt ls -i "$recia AND Queue = '$queue' AND Status = $i "| wc -l)""$NORMAL";
+        done
+}
+
+
+
+# Pas de param�tre on lance le script en affichage directement
+[[ $# -lt 1 ]] && traitement 
+
+# on verifie les options  
+while getopts "edvh-:" opt ; do
+	if [ $opt = "-" ] ; then
+		case $OPTARG in
+			help ) opt="h" ;;
+			version ) opt="v" ;;
+			dump ) opt="d" ;;
+			export ) opt="e" ;;
+			* ) 
+			    echo "Option longue inconnue..." 
+			    break ;;
+		esac
+	fi
+	case $opt in
+		h ) usage ;;
+		v ) echo "Version 2.0" ;;
+		d ) dump ;;
+		e ) export ;;
+		? ) echo "Option inconnue" ;;
+	esac
+done
