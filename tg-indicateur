@@ -7,8 +7,10 @@ export RTSERVER=https://rt.giprecia.fr/rt/
 
 OPTERR=0 #Permet d'eviter le message d'erreur de getopts
 day=$(date "+%d/%m/%Y") 
-fday=$(date "+%d-%m-%Y")
-listStatus="new open stalled"
+fday=$(date "+%d-%m-%Y-%H-%M")
+sday=$(date "+%Y-%m-%d")
+listStatus="new open stalled resolved"
+fileStatus="new open stalled"
 
 #Coloration
 VERT="\\033[1;32m"
@@ -35,14 +37,15 @@ dump(){
 } 
 
 export(){
-	#Supprime la coloration pour sortie dans un fichier et convertie la sortie en csv
-	echo -e $ROSE"Le fichier se trouvera Ã  l'emplacement suivant : /home/ftp/share/Indicateurs/indicateurs_"$fday".csv"$NORMAL";
-        traitement | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g" | sed -r "s/:/;/g" | tee /home/ftp/share/Indicateurs/indicateurs_$fday.csv
+	#Supprime la coloration pour sortie dans un fichier
+        traitement | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g" | sed -r "s/:/;/g" | tee indicateurs_$fday.csv
+	echo "Copie du fichier indicateurs_$fday.csv dans /home/ftp/share/Indicateur"
+	cp -p indicateurs_$fday.csv /home/ftp/share/Indicateur
 
 }
 
 traitement(){
-	echo -e $ROSE"Indicateur du :"$day"$NORMAL";
+	echo -e $ROSE"Indicateur du : "$day"$NORMAL";
 	nobody
 	file '01 - En attente de PEC'
 	file '02 - Incidents'
@@ -57,11 +60,13 @@ nobody(){
 queryFile="( Queue = '01 - En attente de PEC' OR Queue = '02 - Incidents' OR Queue = '03 - SFR (Incidents)' OR Queue = '04 - Travaux Niveau I' OR Queue = '05 - Travaux Niveau II' OR Queue = '02.1 - Incidents ProActifs' )"
 	echo -e "$CYAN""Nobody :""$NORMAL";
 	echo -e "$VERT""Total : "$ROUGE"$(rt ls -i "Owner = 'nobody' AND (Status = 'new' OR Status = 'open' OR Status = 'stalled') AND $queryFile"| wc -l)""$NORMAL";
-	for i in $listStatus
+	for i in $fileStatus
 	do
-		if [ $i == 'new' ]; then status="Nouveau : "; elif [ $i == 'open' ]; then status="Ouvert : "; else status="Stagnant : ";fi
+		if [ $i == 'new' ]; then status="Nouveau : "; elif [ $i == 'open' ]; then status="Ouvert : "; elif [ $i == 'stalled' ]; then  status="Stagnant : ";fi
 		echo -e "$VERT""$status"$ROUGE"$(rt ls -i "Owner = 'nobody' AND Status = $i AND $queryFile "| wc -l)""$NORMAL";	
 	done
+	echo -e "$CYAN""Stagnant sans Motif Delai :""$NORMAL";
+	echo -e "$VERT""Total : "$ROUGE"$(rt ls -i "Owner = 'nobody' AND Status = 'stalled' AND $queryFile AND 'CF.{MotifDelai}' IS NULL"| wc -l)""$NORMAL";
 	echo -e "$CYAN""Stagnant avec Motif Delai :""$NORMAL";
 	echo -e "$VERT""Total : "$ROUGE"$(rt ls -i "Owner = 'nobody' AND Status = 'stalled' AND $queryFile AND 'CF.{MotifDelai}' IS NOT NULL"| wc -l)""$NORMAL";
 
@@ -78,33 +83,32 @@ file(){
 tg="( Owner = 'cblondeau' OR Owner = 'njoubert' OR Owner = 'ssanchez' OR Owner = 'dgelve' OR Owner = 'lleminoux' OR Owner = 'cfonck' OR Owner = 'stellier')"
 recia="(Owner != 'cblondeau' AND Owner != 'njoubert' AND Owner != 'ssanchez' AND Owner != 'dgelve' AND Owner != 'lleminoux' AND Owner != 'cfonck' AND Owner != 'stellier' AND Owner !='nobody')"
 queue=$1
+resolv=''
 	echo -e "$CYAN""File - $queue :""$NORMAL";
 	echo -e "$VERT""Total : "$ROUGE"$(rt ls -i "Queue = '$queue' AND (Status = 'new' OR Status = 'open' OR Status = 'stalled')" | wc -l)""$NORMAL";
         for i in $listStatus
         do
-                if [ $i == 'new' ]; then status="Nouveau : "; elif [ $i == 'open' ]; then status="Ouvert : "; else status="Stagnant : ";fi
-                echo -e "$VERT""$status"$ROUGE"$(rt ls -i "Queue = '$queue' AND Status = $i "| wc -l)""$NORMAL";
+                if [ $i == 'new' ]; then status="Nouveau : "; elif [ $i == 'open' ]; then status="Ouvert : "; elif [ $i == 'stalled' ]; then status="Stagnant : "; elif [ $i == 'resolved' ]; then status="Résolu : "; resolv="AND Resolved = '$sday'"; fi
+                echo -e "$VERT""$status"$ROUGE"$(rt ls -i "Queue = '$queue' AND Status = $i $resolv"| wc -l)""$NORMAL";
         done
         for i in $listStatus
         do
-                if [ $i == 'new' ]; then status="Nobody - Nouveau : "; elif [ $i == 'open' ]; then status="Nobody - Ouvert : "; else status="Nobody - Stagnant : ";fi
-                echo -e "$BLEU""$status"$ROUGE"$(rt ls -i "Owner = 'nobody' AND Queue = '$queue' AND Status = $i "| wc -l)""$NORMAL";
+                if [ $i == 'new' ]; then status="Nobody - Nouveau : "; elif [ $i == 'open' ]; then status="Nobody - Ouvert : "; elif [ $i == 'stalled' ]; then status="Nobody - Stagnant : "; elif [ $i == 'resolved' ]; then status="Nobody - Résolu : "; resolv=" AND Resolved = '$sday'";fi
+                echo -e "$BLEU""$status"$ROUGE"$(rt ls -i "Owner = 'nobody' AND Queue = '$queue' AND Status = $i $resolv"| wc -l)""$NORMAL";
         done
         for i in $listStatus
         do
-                if [ $i == 'new' ]; then status="TG - Nouveau : "; elif [ $i == 'open' ]; then status="TG - Ouvert : "; else status="TG - Stagnant : ";fi
-                echo -e "$ROSE""$status"$ROUGE"$(rt ls -i "$tg AND Queue = '$queue' AND Status = $i "| wc -l)""$NORMAL";
+                if [ $i == 'new' ]; then status="TG - Nouveau : "; elif [ $i == 'open' ]; then status="TG - Ouvert : "; elif [ $i == 'stalled' ]; then status="TG - Stagnant : ";  elif [ $i == 'resolved' ]; then status="TG - Résolu : "; resolv=" AND Resolved = '$sday'";fi
+                echo -e "$ROSE""$status"$ROUGE"$(rt ls -i "$tg AND Queue = '$queue' AND Status = $i $resolv"| wc -l)""$NORMAL";
         done
         for i in $listStatus
         do
-                if [ $i == 'new' ]; then status="Recia - Nouveau : "; elif [ $i == 'open' ]; then status="Recia - Ouvert : "; else status="Recia - Stagnant : ";fi
-                echo -e "$JAUNE""$status"$ROUGE"$(rt ls -i "$recia AND Queue = '$queue' AND Status = $i "| wc -l)""$NORMAL";
+                if [ $i == 'new' ]; then status="Recia - Nouveau : "; elif [ $i == 'open' ]; then status="Recia - Ouvert : "; elif [ $i == 'stalled' ]; then status="Recia - Stagnant : ";  elif [ $i == 'resolved' ]; then status="Recia - Résolu : "; resolv=" AND Resolved = '$sday'";fi
+                echo -e "$JAUNE""$status"$ROUGE"$(rt ls -i "$recia AND Queue = '$queue' AND Status = $i $resolv "| wc -l)""$NORMAL";
         done
 }
 
-
-
-# Pas de paramï¿½tre on lance le script en affichage directement
+# Pas de paramètre on lance le script en affichage directement
 [[ $# -lt 1 ]] && traitement 
 
 # on verifie les options  
