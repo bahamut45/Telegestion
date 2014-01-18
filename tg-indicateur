@@ -40,7 +40,6 @@ export(){
 tmpfile=$(mktemp)
 destination="/home/ftp/share/Indicateur"
 	#Supprime la coloration pour sortie dans un fichier
-	echo "$tmpfile"
         traitement | tee $tmpfile
 	sleep 5
 	echo "================="
