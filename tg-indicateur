@@ -37,10 +37,21 @@ dump(){
 } 
 
 export(){
+tmpfile=$(mktemp)
+destination="/home/ftp/share/Indicateur"
 	#Supprime la coloration pour sortie dans un fichier
-        traitement | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g" | sed -r "s/:/;/g" | tee indicateurs_$fday.csv
-	echo "Copie du fichier indicateurs_$fday.csv dans /home/ftp/share/Indicateur"
-	cp -p indicateurs_$fday.csv /home/ftp/share/Indicateur
+	echo "$tmpfile"
+        traitement | tee $tmpfile
+	sleep 5
+	echo "================="
+	echo "Conversion en csv" 
+	cat $tmpfile | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g" | sed -r "s/:/;/g" >> indicateurs_$fday.csv
+	echo -e "Creation du fichier indicateurs_$fday.csv => ["$VERT"OK"$NORMAL"]"
+	rm -f $tmpfile 
+	if [ -d "$destination" ]; then
+		echo "Copie du fichier indicateurs_$fday.csv dans $destination"
+		cp -p indicateurs_$fday.csv /home/ftp/share/Indicateur
+	fi
 
 }
 
@@ -88,22 +99,22 @@ resolv=''
 	echo -e "$VERT""Total : "$ROUGE"$(rt ls -i "Queue = '$queue' AND (Status = 'new' OR Status = 'open' OR Status = 'stalled')" | wc -l)""$NORMAL";
         for i in $listStatus
         do
-                if [ $i == 'new' ]; then status="Nouveau : "; elif [ $i == 'open' ]; then status="Ouvert : "; elif [ $i == 'stalled' ]; then status="Stagnant : "; elif [ $i == 'resolved' ]; then status="Résolu : "; resolv="AND Resolved = '$sday'"; fi
+                if [ $i == 'new' ]; then status="Nouveau : "; elif [ $i == 'open' ]; then status="Ouvert : "; elif [ $i == 'stalled' ]; then status="Stagnant : "; elif [ $i == 'resolved' ]; then status="Resolu : "; resolv="AND Resolved = '$sday'"; fi
                 echo -e "$VERT""$status"$ROUGE"$(rt ls -i "Queue = '$queue' AND Status = $i $resolv"| wc -l)""$NORMAL";
         done
         for i in $listStatus
         do
-                if [ $i == 'new' ]; then status="Nobody - Nouveau : "; elif [ $i == 'open' ]; then status="Nobody - Ouvert : "; elif [ $i == 'stalled' ]; then status="Nobody - Stagnant : "; elif [ $i == 'resolved' ]; then status="Nobody - Résolu : "; resolv=" AND Resolved = '$sday'";fi
+                if [ $i == 'new' ]; then status="Nobody - Nouveau : "; elif [ $i == 'open' ]; then status="Nobody - Ouvert : "; elif [ $i == 'stalled' ]; then status="Nobody - Stagnant : "; elif [ $i == 'resolved' ]; then status="Nobody - Resolu : "; resolv=" AND Resolved = '$sday'";fi
                 echo -e "$BLEU""$status"$ROUGE"$(rt ls -i "Owner = 'nobody' AND Queue = '$queue' AND Status = $i $resolv"| wc -l)""$NORMAL";
         done
         for i in $listStatus
         do
-                if [ $i == 'new' ]; then status="TG - Nouveau : "; elif [ $i == 'open' ]; then status="TG - Ouvert : "; elif [ $i == 'stalled' ]; then status="TG - Stagnant : ";  elif [ $i == 'resolved' ]; then status="TG - Résolu : "; resolv=" AND Resolved = '$sday'";fi
+                if [ $i == 'new' ]; then status="TG - Nouveau : "; elif [ $i == 'open' ]; then status="TG - Ouvert : "; elif [ $i == 'stalled' ]; then status="TG - Stagnant : ";  elif [ $i == 'resolved' ]; then status="TG - Resolu : "; resolv=" AND Resolved = '$sday'";fi
                 echo -e "$ROSE""$status"$ROUGE"$(rt ls -i "$tg AND Queue = '$queue' AND Status = $i $resolv"| wc -l)""$NORMAL";
         done
         for i in $listStatus
         do
-                if [ $i == 'new' ]; then status="Recia - Nouveau : "; elif [ $i == 'open' ]; then status="Recia - Ouvert : "; elif [ $i == 'stalled' ]; then status="Recia - Stagnant : ";  elif [ $i == 'resolved' ]; then status="Recia - Résolu : "; resolv=" AND Resolved = '$sday'";fi
+                if [ $i == 'new' ]; then status="Recia - Nouveau : "; elif [ $i == 'open' ]; then status="Recia - Ouvert : "; elif [ $i == 'stalled' ]; then status="Recia - Stagnant : ";  elif [ $i == 'resolved' ]; then status="Recia - Resolu : "; resolv=" AND Resolved = '$sday'";fi
                 echo -e "$JAUNE""$status"$ROUGE"$(rt ls -i "$recia AND Queue = '$queue' AND Status = $i $resolv "| wc -l)""$NORMAL";
         done
 }
