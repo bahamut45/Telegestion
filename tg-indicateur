@@ -49,8 +49,8 @@ destination="/home/ftp/share/Indicateur"
 	rm -f $tmpfile 
 	if [ -d "$destination" ]; then
 		echo "Copie du fichier indicateurs_$fday.csv dans $destination"
-		cp -p indicateurs_$fday.csv /home/ftp/share/Indicateur
-	fi
+		cp -p indicateurs_$fday.csv $destination
+       fi
 
 }
 
