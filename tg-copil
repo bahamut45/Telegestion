@@ -1,0 +1,175 @@
+#!/bin/bash
+#set -o nounset
+#set -o verbose
+######## Declaration des variables ########
+export RTUSER=njoubert
+export RTPASSWD=ninja21
+export RTSERVER=https://rt.giprecia.fr/rt/
+
+OPTERR=0 #Permet d'eviter le message d'erreur de getopts
+day=$(date "+%d/%m/%Y")
+fday=$(date "+%d-%m-%Y-%H-%M")
+sday=$(date "+%Y-%m-%d")
+listStatus="open stalled resolved rejected"
+dum="false"
+expor="false"
+
+#Coloration
+VERT="\\033[1;32m"
+NORMAL="\\033[0;39m"
+ROUGE="\\033[1;31m"
+ROSE="\\033[1;35m"
+BLEU="\\033[1;34m"
+BLANC="\\033[0;02m"
+BLANCLAIR="\\033[1;08m"
+JAUNE="\\033[1;33m"
+CYAN="\\033[1;36m"
+
+
+####### Gestions des dates ##############
+
+formatDate(){
+
+CURRENTMONTH=$1
+CURRENTYEAR=$2
+
+ARRAYMONTHS=(Janvier Fevrier Mars Avril Mai Juin Juillet Aout Septembre Octobre Novembre Decembre)
+
+
+if [ ${CURRENTMONTH:0:1} != 0 ] # On verifie que le mois est renseigné avec un zero
+	then
+	if [ $CURRENTMONTH -lt 10 ]
+		then CURRENTMONTH="0"$CURRENTMONTH # Permet d'ajouter le zero du mois si celui n'est pas deja renseigné
+	fi
+fi
+
+LASTDAY=$(cal $CURRENTMONTH $CURRENTYEAR | egrep "28|29|30|31" | tail -1 | awk '{print $NF}')
+FIRSTDAYMONTH=$CURRENTYEAR"-"$CURRENTMONTH"-01"
+LASTDAYMONTH=$CURRENTYEAR"-"$CURRENTMONTH"-"$LASTDAY
+NAMEMONTH=${ARRAYMONTHS[$1-1]}
+}
+
+usage(){
+    echo "Usage: $0 -m -a [options]"
+    echo "--help ou -h : afficher l'aide"
+    echo "--version ou -v : afficher la version"
+    echo "--mois ou -m : le mois choisi format numerique (ex: 1 pour janvier, 2 pour fevrier etc)"
+    echo "--annee ou -a : l'annee choisi format long (ex: 2014)"
+    echo "--dump ou -d : extraction sans coloration"
+    echo "--export ou -e : export en csv les données avec le nom de fichier suivant [copil-mois-annee.csv]"
+}
+
+dump(){
+        #Supprime la coloration pour sortie dans un fichier
+        traitement | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g"
+}
+
+export(){
+tmpfile=$(mktemp)
+destination="/home/ftp/share/Copil"
+        #Supprime la coloration pour sortie dans un fichier
+        traitement | tee $tmpfile
+	formatDate $month $year
+	echo
+	if [ -f copil-$NAMEMONTH-$CURRENTYEAR.csv ]; then
+		filetime=$(stat -c '%.19z' copil-$NAMEMONTH-$CURRENTYEAR.csv | sed 's/[[:space:]]/_/g' )
+		echo -e "$ROUGE""Attention - Le fichier "copil-$NAMEMONTH-$CURRENTYEAR.csv" existe""$NORMAL"
+		mv copil-$NAMEMONTH-$CURRENTYEAR.csv copil-$NAMEMONTH-$CURRENTYEAR-$filetime.csv
+		echo -e "Le fichier copil-$NAMEMONTH-$CURRENTYEAR.csv a ete renomme en copil-$NAMEMONTH-$CURRENTYEAR-$filetime.csv \t ["$VERT"OK"$NORMAL"]"
+	fi 
+        	cat $tmpfile | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g" | sed -r "s/:/;/g" >> copil-$NAMEMONTH-$CURRENTYEAR.csv
+		echo -e "Creation du fichier copil-$NAMEMONTH-$CURRENTYEAR.csv \t ["$VERT"OK"$NORMAL"]"
+        rm -f $tmpfile
+        if [ -d "$destination" ]; then
+                echo "Copie du fichier copil-$NAMEMONTH-$CURRENTYEAR.csv dans $destination"
+                cp -p copil-$NAMEMONTH-$CURRENTYEAR.csv $destination
+        fi
+
+}
+
+traitement(){
+	formatDate $month $year
+	echo -e $ROSE"Copil de : "$NAMEMONTH $CURRENTYEAR"$NORMAL";
+	file '02 - Incidents'
+       	#file '02.1 - Incidents ProActifs'
+        #file '03 - SFR (Incidents)'
+        #file '04 - Travaux Niveau I'
+       	#file '05 - Travaux Niveau II'
+}
+
+file(){
+tg="( Owner = 'cblondeau' OR Owner = 'njoubert' OR Owner = 'ssanchez' OR Owner = 'dgelve' OR Owner = 'lleminoux' OR Owner = 'cfonck' OR Owner = 'stellier')"
+recia="(Owner != 'cblondeau' AND Owner != 'njoubert' AND Owner != 'ssanchez' AND Owner != 'dgelve' AND Owner != 'lleminoux' AND Owner != 'cfonck' AND Owner != 'stellier' AND Owner !='nobody')"
+queue=$1
+resolv=''
+
+        echo -e "$CYAN""File - $queue :""$NORMAL";
+        echo -e "$VERT""Total : "$ROUGE"$(rt ls -i "Queue = '$queue' AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'" | wc -l)""$NORMAL";
+        for i in $listStatus
+        do
+                if [ $i == 'open' ]; then status="Ouvert : "; elif [ $i == 'stalled' ]; then status="Stagnant : "; elif [ $i == 'rejected' ]; then status="Rejeté : "; elif [ $i == 'resolved' ]; then status="Resolu : "; resolv="AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'"; fi
+                echo -e "$VERT""$status"$ROUGE"$(rt ls -i "Queue = '$queue' AND Status = $i AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'  $resolv"| wc -l)""$NORMAL";
+        done
+        for i in $listStatus
+        do
+                if [ $i == 'open' ]; then status="TG - Ouvert : "; elif [ $i == 'stalled' ]; then status="TG - Stagnant : "; elif [ $i == 'rejected' ]; then status="TG - Rejeté : "; elif [ $i == 'resolved' ]; then status="TG - Resolu : "; resolv="AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'";fi
+                echo -e "$ROSE""$status"$ROUGE"$(rt ls -i "$tg AND Queue = '$queue' AND Status = $i AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH' $resolv"| wc -l)""$NORMAL";
+        done
+        for i in $listStatus
+        do
+                if [ $i == 'open' ]; then status="Recia - Ouvert : "; elif [ $i == 'stalled' ]; then status="Recia - Stagnant : "; elif [ $i == 'rejected' ]; then status="Recia - Rejeté : "; elif [ $i == 'resolved' ]; then status="Recia - Resolu : "; resolv="AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'";fi
+                echo -e "$JAUNE""$status"$ROUGE"$(rt ls -i "$recia AND Queue = '$queue' AND Status = $i AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH' $resolv "| wc -l)""$NORMAL";
+        done
+}
+
+
+# Pas de paramètre on lance l'usage
+[[ $# -lt 1 ]] && usage && exit 0
+
+# on verifie les options
+while getopts "edvh-:m:a:" opt ; do
+        if [ $opt = "-" ] ; then
+                case $OPTARG in
+                        help ) opt="h" ;;
+                        version ) opt="v" ;;
+			mois ) opt="m" ;;
+			annee ) opt="a" ;;
+                        dump ) opt="d" ;;
+                        export ) opt="e" ;;
+                        * )
+                            echo "Option longue inconnue..."
+                            break ;;
+                esac
+        fi
+        case $opt in
+                h ) usage ;;
+                v ) echo "Version 0.1" ;;
+		m ) 
+		    if [ -n $OPTARG ];
+		    then
+			month="$OPTARG" 
+		    fi;;
+		a ) 
+		   if [ -n $OPTARG ];
+                   then
+                        year="$OPTARG"
+                   fi;;
+                d ) dum="true" ;;
+                e ) expor="true" ;;
+                ? ) echo "Option inconnue" ;;
+        esac
+done
+
+if [ ! -z $month ] && [ ! -z $year ]
+then
+	if [ "$dum" == "true" ]; then
+		dump
+	elif [ "$expor" == "true" ]; then
+		export
+	else
+		traitement
+	fi
+fi
+if [ -z $month ] || [ -z $year ]; then
+        echo "Erreur : Le parametre -m ou -a ne sont pas mentionnés" && exit 1
+fi
