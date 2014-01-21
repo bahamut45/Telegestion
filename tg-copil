@@ -11,8 +11,8 @@ day=$(date "+%d/%m/%Y")
 fday=$(date "+%d-%m-%Y-%H-%M")
 sday=$(date "+%Y-%m-%d")
 listStatus="open stalled resolved rejected"
-dum="false"
-expor="false"
+expor="false" #Permet d'activer la fonction export
+debug="false" #Permet d'activer le debug des requetes
 
 #Coloration
 VERT="\\033[1;32m"
@@ -36,10 +36,10 @@ CURRENTYEAR=$2
 ARRAYMONTHS=(Janvier Fevrier Mars Avril Mai Juin Juillet Aout Septembre Octobre Novembre Decembre)
 
 
-if [ ${CURRENTMONTH:0:1} != 0 ] # On verifie que le mois est renseigné avec un zero
+if [ ${CURRENTMONTH:0:1} != 0 ] # On verifie que le mois est renseigne avec un zero
 	then
 	if [ $CURRENTMONTH -lt 10 ]
-		then CURRENTMONTH="0"$CURRENTMONTH # Permet d'ajouter le zero du mois si celui n'est pas deja renseigné
+		then CURRENTMONTH="0"$CURRENTMONTH # Permet d'ajouter le zero du mois si celui n'est pas deja renseigne
 	fi
 fi
 
@@ -55,8 +55,8 @@ usage(){
     echo "--version ou -v : afficher la version"
     echo "--mois ou -m : le mois choisi format numerique (ex: 1 pour janvier, 2 pour fevrier etc)"
     echo "--annee ou -a : l'annee choisi format long (ex: 2014)"
-    echo "--dump ou -d : extraction sans coloration"
-    echo "--export ou -e : export en csv les données avec le nom de fichier suivant [copil-mois-annee.csv]"
+    echo "--debug ou -d : permet d'afficher les requetes utilises"
+    echo "--export ou -e : export en csv les donnees avec le nom de fichier suivant [copil-mois-annee.csv]"
 }
 
 dump(){
@@ -91,34 +91,47 @@ traitement(){
 	formatDate $month $year
 	echo -e $ROSE"Copil de : "$NAMEMONTH $CURRENTYEAR"$NORMAL";
 	file '02 - Incidents'
-       	#file '02.1 - Incidents ProActifs'
-        #file '03 - SFR (Incidents)'
-        #file '04 - Travaux Niveau I'
-       	#file '05 - Travaux Niveau II'
+       	file '02.1 - Incidents ProActifs'
+        file '03 - SFR (Incidents)'
+        file '04 - Travaux Niveau I'
+       	file '05 - Travaux Niveau II'
 }
 
 file(){
 tg="( Owner = 'cblondeau' OR Owner = 'njoubert' OR Owner = 'ssanchez' OR Owner = 'dgelve' OR Owner = 'lleminoux' OR Owner = 'cfonck' OR Owner = 'stellier')"
 recia="(Owner != 'cblondeau' AND Owner != 'njoubert' AND Owner != 'ssanchez' AND Owner != 'dgelve' AND Owner != 'lleminoux' AND Owner != 'cfonck' AND Owner != 'stellier' AND Owner !='nobody')"
 queue=$1
-resolv=''
-
         echo -e "$CYAN""File - $queue :""$NORMAL";
+	if [ "$debug" == "true"  ]; then
+		echo "Requete utilise => \"Queue = '$queue' AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'"
+	fi
         echo -e "$VERT""Total : "$ROUGE"$(rt ls -i "Queue = '$queue' AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'" | wc -l)""$NORMAL";
         for i in $listStatus
         do
-                if [ $i == 'open' ]; then status="Ouvert : "; elif [ $i == 'stalled' ]; then status="Stagnant : "; elif [ $i == 'rejected' ]; then status="Rejeté : "; elif [ $i == 'resolved' ]; then status="Resolu : "; resolv="AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'"; fi
-                echo -e "$VERT""$status"$ROUGE"$(rt ls -i "Queue = '$queue' AND Status = $i AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'  $resolv"| wc -l)""$NORMAL";
+		resolv=''
+                if [ $i == 'open' ]; then status="Ouvert : "; elif [ $i == 'stalled' ]; then status="Stagnant : "; elif [ $i == 'rejected' ]; then status="Rejete : "; elif [ $i == 'resolved' ]; then status="Resolu : "; resolv="AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'"; fi
+                if [ "$debug" == "true"  ]; then
+			echo "Requete utilise => \"Queue = '$queue' AND Status = '$i' AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'  $resolv"
+		fi	
+		echo -e "$VERT""$status"$ROUGE"$(rt ls -i "Queue = '$queue' AND Status = '$i' AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'  $resolv"| wc -l)""$NORMAL";
         done
         for i in $listStatus
         do
-                if [ $i == 'open' ]; then status="TG - Ouvert : "; elif [ $i == 'stalled' ]; then status="TG - Stagnant : "; elif [ $i == 'rejected' ]; then status="TG - Rejeté : "; elif [ $i == 'resolved' ]; then status="TG - Resolu : "; resolv="AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'";fi
-                echo -e "$ROSE""$status"$ROUGE"$(rt ls -i "$tg AND Queue = '$queue' AND Status = $i AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH' $resolv"| wc -l)""$NORMAL";
+		resolv=''
+                if [ $i == 'open' ]; then status="TG - Ouvert : "; elif [ $i == 'stalled' ]; then status="TG - Stagnant : "; elif [ $i == 'rejected' ]; then status="TG - Rejete : "; elif [ $i == 'resolved' ]; then status="TG - Resolu : "; resolv="AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'";fi
+		if [ "$debug" == "true" ]; then
+			echo "Requete utilise => \"$tg AND Queue = '$queue' AND Status = '$i' AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH' $resolv"
+		fi
+                echo -e "$ROSE""$status"$ROUGE"$(rt ls -i "$tg AND Queue = '$queue' AND Status = '$i' AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH' $resolv"| wc -l)""$NORMAL";
         done
         for i in $listStatus
         do
-                if [ $i == 'open' ]; then status="Recia - Ouvert : "; elif [ $i == 'stalled' ]; then status="Recia - Stagnant : "; elif [ $i == 'rejected' ]; then status="Recia - Rejeté : "; elif [ $i == 'resolved' ]; then status="Recia - Resolu : "; resolv="AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'";fi
-                echo -e "$JAUNE""$status"$ROUGE"$(rt ls -i "$recia AND Queue = '$queue' AND Status = $i AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH' $resolv "| wc -l)""$NORMAL";
+		resolv=''
+                if [ $i == 'open' ]; then status="Recia - Ouvert : "; elif [ $i == 'stalled' ]; then status="Recia - Stagnant : "; elif [ $i == 'rejected' ]; then status="Recia - Rejete : "; elif [ $i == 'resolved' ]; then status="Recia - Resolu : "; resolv="AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'";fi
+                if [ "$debug" == "true" ]; then
+                        echo "Requete utilise => \"$recia AND Queue = '$queue' AND Status = '$i' AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH' $resolv"
+                fi
+		echo -e "$JAUNE""$status"$ROUGE"$(rt ls -i "$recia AND Queue = '$queue' AND Status = '$i' AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH' $resolv "| wc -l)""$NORMAL";
         done
 }
 
@@ -134,7 +147,7 @@ while getopts "edvh-:m:a:" opt ; do
                         version ) opt="v" ;;
 			mois ) opt="m" ;;
 			annee ) opt="a" ;;
-                        dump ) opt="d" ;;
+                        debug ) opt="d" ;;
                         export ) opt="e" ;;
                         * )
                             echo "Option longue inconnue..."
@@ -154,7 +167,7 @@ while getopts "edvh-:m:a:" opt ; do
                    then
                         year="$OPTARG"
                    fi;;
-                d ) dum="true" ;;
+                d ) debug="true" ;;
                 e ) expor="true" ;;
                 ? ) echo "Option inconnue" ;;
         esac
@@ -162,14 +175,12 @@ done
 
 if [ ! -z $month ] && [ ! -z $year ]
 then
-	if [ "$dum" == "true" ]; then
-		dump
-	elif [ "$expor" == "true" ]; then
+	if [ "$expor" == "true" ]; then
 		export
 	else
 		traitement
 	fi
 fi
 if [ -z $month ] || [ -z $year ]; then
-        echo "Erreur : Le parametre -m ou -a ne sont pas mentionnés" && exit 1
+        echo "Erreur : Le parametre -m ou -a ne sont pas mentionnes" && exit 1
 fi
