@@ -13,6 +13,13 @@ sday=$(date "+%Y-%m-%d")
 listStatus="open stalled resolved rejected"
 expor="false" #Permet d'activer la fonction export
 debug="false" #Permet d'activer le debug des requetes
+oTg="(Owner = 'cblondeau' OR Owner = 'njoubert' OR Owner = 'ssanchez' OR Owner = 'dgelve' OR Owner = 'lleminoux' OR Owner = 'cfonck' OR Owner = 'stellier')"
+cTg="(Creator = 'cblondeau' OR Creator = 'njoubert' OR Creator = 'ssanchez' OR Creator = 'dgelve' OR Creator = 'lleminoux' OR Creator  = 'cfonck' OR Creator = 'stellier')"
+oRecia="(Owner = 'apaillard' OR Owner = 'anombret' OR Owner = 'aguevara' OR Owner = 'cjullien' OR Owner = 'cdaviau' OR Owner = 'cdubreuil' OR Owner = 'dgombault' OR Owner = 'fenard' OR Owner = 'cat' OR Owner = 'jgribonvald' OR Owner = 'kdeschamps' OR Owner = 'kfrapin' OR Owner = 'ngomes' OR Owner = 'pmontagne' OR Owner = 'sgautier')"
+cRecia="(Creator = 'apaillard' OR Creator = 'anombret' OR Creator = 'aguevara' OR Creator = 'cjullien' OR Creator = 'cdaviau' OR Creator = 'cdubreuil' OR Creator = 'dgombault' OR Creator = 'fenard' OR Creator = 'cat' OR Creator = 'jgribonvald' OR Creator = 'kdeschamps' OR Creator = 'kfrapin' OR Creator = 'ngomes' OR Creator = 'pmontagne' OR Creator = 'sgautier')"
+cBot="(Creator = 'reciabot' OR Creator = 'root')"
+cOther="(Creator != 'cblondeau' AND Creator != 'njoubert' AND Creator != 'ssanchez' AND Creator != 'dgelve' AND Creator != 'lleminoux' AND Creator != 'cfonck' AND Creator != 'stellier' AND Creator != 'apaillard' AND Creator != 'anombret' AND Creator != 'aguevara' AND Creator != 'cjullien' AND Creator != 'cdaviau' AND Creator != 'cdubreuil' AND Creator != 'dgombault' AND Creator != 'fenard' AND Creator != 'cat' AND Creator != 'jgribonvald' AND Creator != 'kdeschamps' AND Creator != 'kfrapin' AND Creator != 'ngomes' AND Creator != 'pmontagne' AND Creator != 'sgautier' AND Creator != 'reciabot' AND Creator != 'root')"
+
 
 #Coloration
 VERT="\\033[1;32m"
@@ -20,7 +27,7 @@ NORMAL="\\033[0;39m"
 ROUGE="\\033[1;31m"
 ROSE="\\033[1;35m"
 BLEU="\\033[1;34m"
-BLANC="\\033[0;02m"
+BLANC="\\033[0;37m"
 BLANCLAIR="\\033[1;08m"
 JAUNE="\\033[1;33m"
 CYAN="\\033[1;36m"
@@ -90,20 +97,132 @@ destination="/home/ftp/share/Copil"
 traitement(){
 	formatDate $month $year
 	echo -e $ROSE"Copil de : "$NAMEMONTH $CURRENTYEAR"$NORMAL";
-	file '02 - Incidents'
-       	file '02.1 - Incidents ProActifs'
-        file '03 - SFR (Incidents)'
-        file '04 - Travaux Niveau I'
-       	file '05 - Travaux Niveau II'
+	echo -e $BLANC"Nombre ticket cree pour toute les files"$NORMAL;
+	# Total de ticket cree
+	if [ "$debug" == "true" ]; then
+		query="$VERT : Requete => \"Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'\""
+	else
+		query=""
+	fi
+	echo -e "$VERT""Total : "$ROUGE"$(rt ls -i "Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'" | grep ticket -c)"$query"$NORMAL";
+
+	# Total de ticket cree par la tg 	
+        if [ "$debug" == "true" ]; then
+                query="$VERT : Requete => \"$cTg AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'\""
+        else
+                query=""
+        fi
+	echo -e "$ROSE""Total pour la telegestion : "$ROUGE"$(rt ls -i "$cTg AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'" | grep ticket -c)"$query"$NORMAL";
+	
+	# Total de ticket cree par le giprecia
+        if [ "$debug" == "true" ]; then
+                query="$VERT : Requete => \"$cRecia AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'\""
+        else
+                query=""
+        fi
+	echo -e "$JAUNE""Total pour le giprecia : "$ROUGE"$(rt ls -i "$cRecia AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'" | grep ticket -c)"$query"$NORMAL";
+
+        # Total de ticket cree par reciabot
+        if [ "$debug" == "true" ]; then
+                query="$VERT : Requete => \"$cBot AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'\""
+        else
+                query=""
+        fi
+        echo -e "$BLEU""Total cree automatiquement (reciabot + root) : "$ROUGE"$(rt ls -i "$cBot AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'" | grep ticket -c)"$query"$NORMAL";
+
+        # Total de ticket cree par les admins
+        if [ "$debug" == "true" ]; then
+                query="$VERT : Requete => \"$cOther AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'\""
+        else
+                query=""
+        fi
+        echo -e "$CYAN""Total pour les admins : "$ROUGE"$(rt ls -i "$cOther AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'" | grep ticket -c)"$query"$NORMAL";
+
+	echo
+        echo -e $BLANC"Nombre ticket resolu pour toute les files"$NORMAL;
+
+
+        # Total de ticket resolu
+        if [ "$debug" == "true" ]; then
+                query="$VERT : Requete => \"Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'\""
+        else
+                query=""
+        fi
+	echo -e "$VERT""Total : "$ROUGE"$(rt ls -i "Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'" | grep ticket -c)"$query"$NORMAL";
+
+        # Total de ticket resolu par la telegestion
+        if [ "$debug" == "true" ]; then
+                query="$VERT : Requete => \"$oTg AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'\""
+        else
+                query=""
+        fi
+        echo -e "$ROSE""Total pour la telegestion : "$ROUGE"$(rt ls -i "$oTg AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'" | grep ticket -c)"$query"$NORMAL";
+
+        # Total de ticket resolu par le giprecia
+        if [ "$debug" == "true" ]; then
+                query="$VERT : Requete => \"$oRecia AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'\""
+        else
+                query=""
+        fi
+        echo -e "$JAUNE""Total pour le giprecia : "$ROUGE"$(rt ls -i "$oRecia AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'" | grep ticket -c)"$query"$NORMAL";
+
+        # Total de ticket resolu en nobody
+        if [ "$debug" == "true" ]; then
+                query="$VERT : Requete => \"Owner = 'nobody' AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'\""
+        else
+                query=""
+        fi
+        echo -e "$BLEU""Total pour Nobody : "$ROUGE"$(rt ls -i "Owner = 'nobody' AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'" | grep ticket -c)"$query"$NORMAL";
+
+	echo
+        echo -e $BLANC"Nombre ticket pere resolu pour toute les files"$NORMAL;
+
+        # Total de ticket pere resolu
+        if [ "$debug" == "true" ]; then
+                query="$VERT : Requete => \"MemberOf IS NULL AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'\""
+        else
+                query=""
+        fi
+        echo -e "$VERT""Total : "$ROUGE"$(rt ls -i "MemberOf IS NULL AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'" | grep ticket -c)"$query"$NORMAL";
+
+        # Total de ticket resolu par la telegestion
+        if [ "$debug" == "true" ]; then
+                query="$VERT : Requete => \"MemberOf IS NULL AND $oTg AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'\""
+        else
+                query=""
+        fi
+        echo -e "$ROSE""Total pour la telegestion : "$ROUGE"$(rt ls -i "MemberOf IS NULL AND $oTg AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'" | grep ticket -c)"$query"$NORMAL";
+
+        # Total de ticket resolu par le giprecia
+        if [ "$debug" == "true" ]; then
+                query="$VERT : Requete => \"MemberOf IS NULL AND $oRecia AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'\""
+        else
+                query=""
+        fi
+        echo -e "$JAUNE""Total pour le giprecia : "$ROUGE"$(rt ls -i "MemberOf IS NULL AND $oRecia AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'" | grep ticket -c)"$query"$NORMAL";
+
+        # Total de ticket resolu en nobody
+        if [ "$debug" == "true" ]; then
+                query="$VERT : Requete => \"MemberOf IS NULL AND Owner = 'nobody' AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'\""
+        else
+                query=""
+        fi
+        echo -e "$BLEU""Total pour Nobody : "$ROUGE"$(rt ls -i "Owner = 'nobody' AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'" | grep ticket -c)"$query"$NORMAL";
+
+	
+
+	#file '02 - Incidents'
+       	#file '02.1 - Incidents ProActifs'
+        #file '03 - SFR (Incidents)'
+        #file '04 - Travaux Niveau I'
+       	#file '05 - Travaux Niveau II'
 }
 
 file(){
-tg="( Owner = 'cblondeau' OR Owner = 'njoubert' OR Owner = 'ssanchez' OR Owner = 'dgelve' OR Owner = 'lleminoux' OR Owner = 'cfonck' OR Owner = 'stellier')"
-recia="(Owner != 'cblondeau' AND Owner != 'njoubert' AND Owner != 'ssanchez' AND Owner != 'dgelve' AND Owner != 'lleminoux' AND Owner != 'cfonck' AND Owner != 'stellier' AND Owner !='nobody')"
 queue=$1
         echo -e "$CYAN""File - $queue :""$NORMAL";
 	if [ "$debug" == "true"  ]; then
-		echo "Requete utilise => \"Queue = '$queue' AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'"
+		echo "Requete utilise => \"Queue = '$queue' AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'\""
 	fi
         echo -e "$VERT""Total : "$ROUGE"$(rt ls -i "Queue = '$queue' AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'" | wc -l)""$NORMAL";
         for i in $listStatus
