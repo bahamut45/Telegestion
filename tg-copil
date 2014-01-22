@@ -97,161 +97,295 @@ destination="/home/ftp/share/Copil"
 traitement(){
 	formatDate $month $year
 	echo -e $ROSE"Copil de : "$NAMEMONTH $CURRENTYEAR"$NORMAL";
-	echo -e $BLANC"Nombre ticket cree pour toute les files"$NORMAL;
+	total
+	file '02 - Incidents'
+       	file '02.1 - Incidents ProActifs'
+        file '03 - SFR (Incidents)'
+        file '04 - Travaux Niveau I'
+       	file '05 - Travaux Niveau II'
+}
+
+total(){
+	echo -e $BLANC"Nombre ticket cree pour toute les files"$NORMAL;	
 	# Total de ticket cree
+	request="Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'" # on créé une variable car on a besoin à plusieurs endroits
 	if [ "$debug" == "true" ]; then
-		query="$VERT : Requete => \"Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'\""
+		query="$VERT : Requete => \"$request\""
 	else
 		query=""
 	fi
-	echo -e "$VERT""Total : "$ROUGE"$(rt ls -i "Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'" | grep ticket -c)"$query"$NORMAL";
+	echo -e "$VERT""Total : "$ROUGE"$(rt ls -i "$request" | grep ticket -c)"$query"$NORMAL";
+	unset request # on detruit la variable pour eviter les problemes
 
-	# Total de ticket cree par la tg 	
+	# Total de ticket cree par la tg
+	request="$cTg AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'" 	
         if [ "$debug" == "true" ]; then
-                query="$VERT : Requete => \"$cTg AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'\""
+                query="$VERT : Requete => \"$request\""
         else
                 query=""
         fi
-	echo -e "$ROSE""Total pour la telegestion : "$ROUGE"$(rt ls -i "$cTg AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'" | grep ticket -c)"$query"$NORMAL";
-	
+	echo -e "$ROSE""Total pour la telegestion : "$ROUGE"$(rt ls -i "$request" | grep ticket -c)"$query"$NORMAL";
+	unset request
+
 	# Total de ticket cree par le giprecia
+	request="$cRecia AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'"
         if [ "$debug" == "true" ]; then
-                query="$VERT : Requete => \"$cRecia AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'\""
+                query="$VERT : Requete => \"$request\""
         else
                 query=""
         fi
-	echo -e "$JAUNE""Total pour le giprecia : "$ROUGE"$(rt ls -i "$cRecia AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'" | grep ticket -c)"$query"$NORMAL";
+	echo -e "$JAUNE""Total pour le giprecia : "$ROUGE"$(rt ls -i "$request" | grep ticket -c)"$query"$NORMAL";
+	unset request
 
         # Total de ticket cree par reciabot
+	request="$cBot AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'"
         if [ "$debug" == "true" ]; then
-                query="$VERT : Requete => \"$cBot AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'\""
+                query="$VERT : Requete => \"$request\""
         else
                 query=""
         fi
-        echo -e "$BLEU""Total cree automatiquement (reciabot + root) : "$ROUGE"$(rt ls -i "$cBot AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'" | grep ticket -c)"$query"$NORMAL";
+        echo -e "$BLEU""Total cree automatiquement (reciabot + root) : "$ROUGE"$(rt ls -i "$request" | grep ticket -c)"$query"$NORMAL";
+	unset request
 
         # Total de ticket cree par les admins
+	request="$cOther AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'"
         if [ "$debug" == "true" ]; then
-                query="$VERT : Requete => \"$cOther AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'\""
+                query="$VERT : Requete => \"$request\""
         else
                 query=""
         fi
-        echo -e "$CYAN""Total pour les admins : "$ROUGE"$(rt ls -i "$cOther AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'" | grep ticket -c)"$query"$NORMAL";
+        echo -e "$CYAN""Total pour les admins : "$ROUGE"$(rt ls -i "$request" | grep ticket -c)"$query"$NORMAL";
+	unset request
 
 	echo
         echo -e $BLANC"Nombre ticket resolu pour toute les files"$NORMAL;
 
-
         # Total de ticket resolu
+	request="Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'"
         if [ "$debug" == "true" ]; then
-                query="$VERT : Requete => \"Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'\""
+                query="$VERT : Requete => \"$request\""
         else
                 query=""
         fi
-	echo -e "$VERT""Total : "$ROUGE"$(rt ls -i "Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'" | grep ticket -c)"$query"$NORMAL";
+	echo -e "$VERT""Total : "$ROUGE"$(rt ls -i "$request" | grep ticket -c)"$query"$NORMAL";
+	unset request
 
         # Total de ticket resolu par la telegestion
+	request="$oTg AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'"
         if [ "$debug" == "true" ]; then
-                query="$VERT : Requete => \"$oTg AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'\""
+                query="$VERT : Requete => \"$request\""
         else
                 query=""
         fi
-        echo -e "$ROSE""Total pour la telegestion : "$ROUGE"$(rt ls -i "$oTg AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'" | grep ticket -c)"$query"$NORMAL";
+        echo -e "$ROSE""Total pour la telegestion : "$ROUGE"$(rt ls -i "$request" | grep ticket -c)"$query"$NORMAL";
+	unset request
 
         # Total de ticket resolu par le giprecia
+	request="$oRecia AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'"
         if [ "$debug" == "true" ]; then
-                query="$VERT : Requete => \"$oRecia AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'\""
+                query="$VERT : Requete => \"$request\""
         else
                 query=""
         fi
-        echo -e "$JAUNE""Total pour le giprecia : "$ROUGE"$(rt ls -i "$oRecia AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'" | grep ticket -c)"$query"$NORMAL";
+        echo -e "$JAUNE""Total pour le giprecia : "$ROUGE"$(rt ls -i "$request" | grep ticket -c)"$query"$NORMAL";
+	unset request
 
         # Total de ticket resolu en nobody
+	request="Owner = 'nobody' AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'"
         if [ "$debug" == "true" ]; then
-                query="$VERT : Requete => \"Owner = 'nobody' AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'\""
+                query="$VERT : Requete => \"$request\""
         else
                 query=""
         fi
-        echo -e "$BLEU""Total pour Nobody : "$ROUGE"$(rt ls -i "Owner = 'nobody' AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'" | grep ticket -c)"$query"$NORMAL";
+        echo -e "$BLEU""Total pour Nobody : "$ROUGE"$(rt ls -i "$request" | grep ticket -c)"$query"$NORMAL";
+	unset request
 
 	echo
         echo -e $BLANC"Nombre ticket pere resolu pour toute les files"$NORMAL;
 
         # Total de ticket pere resolu
+	request="MemberOf IS NULL AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'"
         if [ "$debug" == "true" ]; then
-                query="$VERT : Requete => \"MemberOf IS NULL AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'\""
+                query="$VERT : Requete => \"$request\""
         else
                 query=""
         fi
-        echo -e "$VERT""Total : "$ROUGE"$(rt ls -i "MemberOf IS NULL AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'" | grep ticket -c)"$query"$NORMAL";
+        echo -e "$VERT""Total : "$ROUGE"$(rt ls -i "$request" | grep ticket -c)"$query"$NORMAL";
+	unset request
 
         # Total de ticket resolu par la telegestion
+	request="MemberOf IS NULL AND $oTg AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'"
         if [ "$debug" == "true" ]; then
-                query="$VERT : Requete => \"MemberOf IS NULL AND $oTg AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'\""
+                query="$VERT : Requete => \"$request\""
         else
                 query=""
         fi
-        echo -e "$ROSE""Total pour la telegestion : "$ROUGE"$(rt ls -i "MemberOf IS NULL AND $oTg AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'" | grep ticket -c)"$query"$NORMAL";
+        echo -e "$ROSE""Total pour la telegestion : "$ROUGE"$(rt ls -i "$request" | grep ticket -c)"$query"$NORMAL";
+	unset request
 
         # Total de ticket resolu par le giprecia
+	request="MemberOf IS NULL AND $oRecia AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'"
         if [ "$debug" == "true" ]; then
-                query="$VERT : Requete => \"MemberOf IS NULL AND $oRecia AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'\""
+                query="$VERT : Requete => \"$request\""
         else
                 query=""
         fi
-        echo -e "$JAUNE""Total pour le giprecia : "$ROUGE"$(rt ls -i "MemberOf IS NULL AND $oRecia AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'" | grep ticket -c)"$query"$NORMAL";
+        echo -e "$JAUNE""Total pour le giprecia : "$ROUGE"$(rt ls -i "$request" | grep ticket -c)"$query"$NORMAL";
+	unset request
 
         # Total de ticket resolu en nobody
+	request="MemberOf IS NULL AND Owner = 'nobody' AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'"
         if [ "$debug" == "true" ]; then
-                query="$VERT : Requete => \"MemberOf IS NULL AND Owner = 'nobody' AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'\""
+                query="$VERT : Requete => \"$request\""
         else
                 query=""
         fi
-        echo -e "$BLEU""Total pour Nobody : "$ROUGE"$(rt ls -i "Owner = 'nobody' AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'" | grep ticket -c)"$query"$NORMAL";
+        echo -e "$BLEU""Total pour Nobody : "$ROUGE"$(rt ls -i "$request" | grep ticket -c)"$query"$NORMAL";
+	unset request
+	echo
 
-	
-
-	#file '02 - Incidents'
-       	#file '02.1 - Incidents ProActifs'
-        #file '03 - SFR (Incidents)'
-        #file '04 - Travaux Niveau I'
-       	#file '05 - Travaux Niveau II'
 }
+
 
 file(){
 queue=$1
-        echo -e "$CYAN""File - $queue :""$NORMAL";
-	if [ "$debug" == "true"  ]; then
-		echo "Requete utilise => \"Queue = '$queue' AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'\""
+	echo -e $BLANC"Nombre ticket cree pour la file $queue "$NORMAL;	
+	# Total de ticket cree
+	request="Queue = '$queue' AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'" # on créé une variable car on a besoin à plusieurs endroits
+	if [ "$debug" == "true" ]; then
+		query="$VERT : Requete => \"$request\""
+	else
+		query=""
 	fi
-        echo -e "$VERT""Total : "$ROUGE"$(rt ls -i "Queue = '$queue' AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'" | wc -l)""$NORMAL";
-        for i in $listStatus
-        do
-		resolv=''
-                if [ $i == 'open' ]; then status="Ouvert : "; elif [ $i == 'stalled' ]; then status="Stagnant : "; elif [ $i == 'rejected' ]; then status="Rejete : "; elif [ $i == 'resolved' ]; then status="Resolu : "; resolv="AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'"; fi
-                if [ "$debug" == "true"  ]; then
-			echo "Requete utilise => \"Queue = '$queue' AND Status = '$i' AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'  $resolv"
-		fi	
-		echo -e "$VERT""$status"$ROUGE"$(rt ls -i "Queue = '$queue' AND Status = '$i' AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'  $resolv"| wc -l)""$NORMAL";
-        done
-        for i in $listStatus
-        do
-		resolv=''
-                if [ $i == 'open' ]; then status="TG - Ouvert : "; elif [ $i == 'stalled' ]; then status="TG - Stagnant : "; elif [ $i == 'rejected' ]; then status="TG - Rejete : "; elif [ $i == 'resolved' ]; then status="TG - Resolu : "; resolv="AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'";fi
-		if [ "$debug" == "true" ]; then
-			echo "Requete utilise => \"$tg AND Queue = '$queue' AND Status = '$i' AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH' $resolv"
-		fi
-                echo -e "$ROSE""$status"$ROUGE"$(rt ls -i "$tg AND Queue = '$queue' AND Status = '$i' AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH' $resolv"| wc -l)""$NORMAL";
-        done
-        for i in $listStatus
-        do
-		resolv=''
-                if [ $i == 'open' ]; then status="Recia - Ouvert : "; elif [ $i == 'stalled' ]; then status="Recia - Stagnant : "; elif [ $i == 'rejected' ]; then status="Recia - Rejete : "; elif [ $i == 'resolved' ]; then status="Recia - Resolu : "; resolv="AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'";fi
-                if [ "$debug" == "true" ]; then
-                        echo "Requete utilise => \"$recia AND Queue = '$queue' AND Status = '$i' AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH' $resolv"
-                fi
-		echo -e "$JAUNE""$status"$ROUGE"$(rt ls -i "$recia AND Queue = '$queue' AND Status = '$i' AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH' $resolv "| wc -l)""$NORMAL";
-        done
+	echo -e "$VERT""Total : "$ROUGE"$(rt ls -i "$request" | grep ticket -c)"$query"$NORMAL";
+	unset request # on detruit la variable pour eviter les problemes
+
+	# Total de ticket cree par la tg
+	request="Queue = '$queue' AND $cTg AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'" 	
+        if [ "$debug" == "true" ]; then
+                query="$VERT : Requete => \"$request\""
+        else
+                query=""
+        fi
+	echo -e "$ROSE""Total pour la telegestion : "$ROUGE"$(rt ls -i "$request" | grep ticket -c)"$query"$NORMAL";
+	unset request
+
+	# Total de ticket cree par le giprecia
+	request="Queue = '$queue' AND $cRecia AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'"
+        if [ "$debug" == "true" ]; then
+                query="$VERT : Requete => \"$request\""
+        else
+                query=""
+        fi
+	echo -e "$JAUNE""Total pour le giprecia : "$ROUGE"$(rt ls -i "$request" | grep ticket -c)"$query"$NORMAL";
+	unset request
+
+        # Total de ticket cree par reciabot
+	request="Queue = '$queue' AND $cBot AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'"
+        if [ "$debug" == "true" ]; then
+                query="$VERT : Requete => \"$request\""
+        else
+                query=""
+        fi
+        echo -e "$BLEU""Total cree automatiquement (reciabot + root) : "$ROUGE"$(rt ls -i "$request" | grep ticket -c)"$query"$NORMAL";
+	unset request
+
+        # Total de ticket cree par les admins
+	request="Queue = '$queue' AND $cOther AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'"
+        if [ "$debug" == "true" ]; then
+                query="$VERT : Requete => \"$request\""
+        else
+                query=""
+        fi
+        echo -e "$CYAN""Total pour les admins : "$ROUGE"$(rt ls -i "$request" | grep ticket -c)"$query"$NORMAL";
+	unset request
+
+	echo
+        echo -e $BLANC"Nombre ticket resolu pour la file $queue "$NORMAL;
+
+        # Total de ticket resolu
+	request="Queue = '$queue' AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'"
+        if [ "$debug" == "true" ]; then
+                query="$VERT : Requete => \"$request\""
+        else
+                query=""
+        fi
+	echo -e "$VERT""Total : "$ROUGE"$(rt ls -i "$request" | grep ticket -c)"$query"$NORMAL";
+	unset request
+
+        # Total de ticket resolu par la telegestion
+	request="Queue = '$queue' AND $oTg AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'"
+        if [ "$debug" == "true" ]; then
+                query="$VERT : Requete => \"$request\""
+        else
+                query=""
+        fi
+        echo -e "$ROSE""Total pour la telegestion : "$ROUGE"$(rt ls -i "$request" | grep ticket -c)"$query"$NORMAL";
+	unset request
+
+        # Total de ticket resolu par le giprecia
+	request="Queue = '$queue' AND $oRecia AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'"
+        if [ "$debug" == "true" ]; then
+                query="$VERT : Requete => \"$request\""
+        else
+                query=""
+        fi
+        echo -e "$JAUNE""Total pour le giprecia : "$ROUGE"$(rt ls -i "$request" | grep ticket -c)"$query"$NORMAL";
+	unset request
+
+        # Total de ticket resolu en nobody
+	request="Queue = '$queue' AND Owner = 'nobody' AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'"
+        if [ "$debug" == "true" ]; then
+                query="$VERT : Requete => \"$request\""
+        else
+                query=""
+        fi
+        echo -e "$BLEU""Total pour Nobody : "$ROUGE"$(rt ls -i "$request" | grep ticket -c)"$query"$NORMAL";
+	unset request
+
+	echo
+        echo -e $BLANC"Nombre ticket pere resolu pour la file $queue "$NORMAL;
+
+        # Total de ticket pere resolu
+	request="Queue = '$queue' AND MemberOf IS NULL AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'"
+        if [ "$debug" == "true" ]; then
+                query="$VERT : Requete => \"$request\""
+        else
+                query=""
+        fi
+        echo -e "$VERT""Total : "$ROUGE"$(rt ls -i "$request" | grep ticket -c)"$query"$NORMAL";
+	unset request
+
+        # Total de ticket resolu par la telegestion
+	request="Queue = '$queue' AND MemberOf IS NULL AND $oTg AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'"
+        if [ "$debug" == "true" ]; then
+                query="$VERT : Requete => \"$request\""
+        else
+                query=""
+        fi
+        echo -e "$ROSE""Total pour la telegestion : "$ROUGE"$(rt ls -i "$request" | grep ticket -c)"$query"$NORMAL";
+	unset request
+
+        # Total de ticket resolu par le giprecia
+	request="Queue = '$queue' AND MemberOf IS NULL AND $oRecia AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'"
+        if [ "$debug" == "true" ]; then
+                query="$VERT : Requete => \"$request\""
+        else
+                query=""
+        fi
+        echo -e "$JAUNE""Total pour le giprecia : "$ROUGE"$(rt ls -i "$request" | grep ticket -c)"$query"$NORMAL";
+	unset request
+
+        # Total de ticket resolu en nobody
+	request="Queue = '$queue' AND MemberOf IS NULL AND Owner = 'nobody' AND Resolved >='$FIRSTDAYMONTH' AND Resolved <='$LASTDAYMONTH'"
+        if [ "$debug" == "true" ]; then
+                query="$VERT : Requete => \"$request\""
+        else
+                query=""
+        fi
+        echo -e "$BLEU""Total pour Nobody : "$ROUGE"$(rt ls -i "$request" | grep ticket -c)"$query"$NORMAL";
+	unset request
+	echo
 }
 
 
