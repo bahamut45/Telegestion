@@ -9,6 +9,7 @@ OPTERR=0 #Permet d'eviter le message d'erreur de getopts
 day=$(date "+%d/%m/%Y") 
 fday=$(date "+%d-%m-%Y-%H-%M")
 sday=$(date "+%Y-%m-%d")
+mday=$(date "+%B_%Y")
 listStatus="new open stalled resolved"
 fileStatus="new open stalled"
 
@@ -38,20 +39,23 @@ dump(){
 
 export(){
 tmpfile=$(mktemp)
-destination="/home/ftp/share/Indicateur"
+destination="/home/ftp/share/Indicateur/$mday"
+file="/tmp/indicateurs_$fday.csv"
 	#Supprime la coloration pour sortie dans un fichier
         traitement | tee $tmpfile
-	sleep 5
-	echo "================="
-	echo "Conversion en csv" 
-	cat $tmpfile | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g" | sed -r "s/:/;/g" >> indicateurs_$fday.csv
-	echo -e "Creation du fichier indicateurs_$fday.csv => ["$VERT"OK"$NORMAL"]"
+	echo 
+	echo -e "Traitement des indicateurs \t ["$VERT"OK"$NORMAL"]"
+	cat $tmpfile | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g" | sed -r "s/:/;/g" >> $file
+	echo -e "Creation du fichier $file \t ["$VERT"OK"$NORMAL"]"
 	rm -f $tmpfile 
+        if [ ! -d "$destination" ]; then
+		mkdir -p $destination
+		echo -e "Creation du dossier $destination \t ["$VERT"OK"$NORMAL"]"
+	fi 
 	if [ -d "$destination" ]; then
-		echo "Copie du fichier indicateurs_$fday.csv dans $destination"
-		cp -p indicateurs_$fday.csv $destination
-       fi
-
+		mv $file $destination
+		echo -e "Deplacement du fichier $file dans $destination \t ["$VERT"OK"$NORMAL"]"
+        fi
 }
 
 traitement(){
