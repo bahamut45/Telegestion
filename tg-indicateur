@@ -113,7 +113,7 @@ queryFile="( Queue = '01 - En attente de PEC' OR Queue = '02 - Incidents' OR Que
     echo -e "$VERT""Total : "$ROUGE"$(rt ls -i "$request"| grep ticket -c)"$query"$NORMAL";
 
 declare -A listMD
-listMD=(["A"]="Attente matériel" ["B"]="Attente Periode Creuse" ["C"]="Attente réponse établissement" ["D"]="Attente réponse RECIA" ["E"]="Attente retour niveau 2" ["F"]="Déplacement Programmé" ["G"]="En cours de développement" ["H"]="Intervention programmée")
+listMD=(["A"]="Attente matériel" ["B"]="Attente Periode Creuse" ["C"]="Attente réponse établissement" ["D"]="Attente réponse RECIA" ["E"]="Attente retour niveau 2" ["F"]="Déplacement programmé" ["G"]="En cours de développement" ["H"]="Intervention programmée")
     for elem in ${!listMD[*]}
     do  
         text=$(echo ${listMD[${elem}]} | iconv -f utf8 -t ascii//TRANSLIT) #Soucis d'accent
