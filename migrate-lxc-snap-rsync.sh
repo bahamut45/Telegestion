@@ -23,7 +23,7 @@ is_ping_host() {
 	ping -c 2 $1 &> /dev/null
 	if [ $? == 0 ]
 	then
-		return 0 
+		return 0
 	else
 		return 1
 	fi
@@ -36,7 +36,7 @@ is_ssh_open() {
 		return 0
 	else
 		return 1
-	fi 
+	fi
 }
 
 network() {
@@ -94,10 +94,10 @@ listLxcLv() {
 		arrVgDestFree=($(ssh $SSHOPTIONS $IP 2>/dev/null vgs | grep $VGDEST | awk '{print $7}' | grep -v VG | sed "s/,/./g"));
 		if [[ $arrVgDestFree == *t* ]]
 		then
-			vgDestFre=${arrVgDestFree:0:4}  
+			vgDestFre=${arrVgDestFree:0:4}
 			vgDestFree=`echo $vgDestFre | awk '{print 1000 * $1}'`
 		else
-			vgDestFree=${arrVgDestFree:0:4}	
+			vgDestFree=${arrVgDestFree:0:4}
 			vgDestFree=`echo $vgDestFree | cut -d"." -f1`
 		fi
 		for i in ${listLxcUsed[@]}
@@ -111,7 +111,7 @@ listLxcLv() {
 		else
 			echo -e "Information : Les lvs $VERT ${listLxcNamed[*]} $NORMAL de $1 peuvent être migrés sur $vg distant \t $VERT""[OK]""$NORMAL";
 		fi
-	done		
+	done
 }
 
 lxc() {
@@ -129,7 +129,7 @@ lxc() {
 		else
 			echo "Information : La lxc $1 contient : "
 			listLxcLv $1
-		fi	
+		fi
 	fi
 }
 

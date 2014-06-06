@@ -2,10 +2,7 @@
 model3com=$(snmpwalk -v 1 -c recia-ro $1 1.3.6.1.2.1.1.1.0 | cut -d'"' -f2 | head  -n1 | awk '{print $1 $3}')
 model=$(snmpwalk -v 1 -c recia-ro $1 1.3.6.1.2.1.1.1.0 | cut -d'"' -f2 | head  -n1 | awk '{print $1;}')
 
-echo $model3com
-echo $model
-
-if [[ "$model" == "H3C" ||  "$model" == "Cisco" || "$model3com" == "3Com4500" ]]; then
+if [[ "$model" == "H3C" ||  "$model" == "Cisco" || "$model" == "HP" || "$model3com" == "3Com4500" || "$model3com" == "3Com5500G-EI" || "$model3com" == "3Com4800G" || "$model3com" == "3ComSwitch" ]]; then
 	tg-telnetv2 $1 Username
 fi
 
