@@ -106,10 +106,10 @@ listLxcLv() {
 		done
 		if [[ $totalUsed -gt $vgDestFree ]]
 		then
-			echo -e "Erreur : Les lvs $ROUGE ${listLxcNamed[*]} $NORMAL de $1 prennent trop d'espace disque  pour migrer sur $vg distant \t $ROUGE""[KO]""$NORMAL";
+			echo -e "Erreur : Les lvs $ROUGE ${listLxcNamed[*]} $NORMAL de $1 prennent trop d'espace disque  pour migrer sur $VGDEST distant \t $ROUGE""[KO]""$NORMAL";
 			exit 255
 		else
-			echo -e "Information : Les lvs $VERT ${listLxcNamed[*]} $NORMAL de $1 peuvent être migrés sur $vg distant \t $VERT""[OK]""$NORMAL";
+			echo -e "Information : Les lvs $VERT ${listLxcNamed[*]} $NORMAL de $1 peuvent être migrés sur $VGDEST distant \t $VERT""[OK]""$NORMAL";
 		fi
 	done
 }
