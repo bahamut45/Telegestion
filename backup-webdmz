@@ -1,0 +1,19 @@
+#!/bin/sh
+BACKUP_DIR="/home/backups/mysql"
+mkdir --parents "$BACKUP_DIR"
+EXCLUSIONS='(information_schema|performance_schema|mysql)'
+MY_USER=$(grep -E 'user' /etc/mysql/debian.cnf | sort -u | awk {' print $3'} )
+MY_PASSWD=$(grep -E 'password' /etc/mysql/debian.cnf | sort -u | awk {' print $3'} )
+databases="$(mysql -u $MY_USER -p$MY_PASSWD -Bse 'show databases' | grep -v -E $EXCLUSIONS)"
+for database in ${databases[@]} 
+do
+    mysqldump -u $MY_USER -p$MY_PASSWD --quick --add-locks --lock-tables --extended-insert $database |  gzip > "$BACKUP_DIR/${database}.sql.gz"
+done
+DIRSITES="/srv/www"
+BACKUP_SITES="/home/backups/sites"
+mkdir --parents "$BACKUP_SITES"
+sites="$(ls -l $DIRSITES | egrep '^d' | awk '{print $9}')"
+for site in ${sites[@]}
+do
+        tar -cvzf "$BACKUP_SITES/${site}.tar.gz" "$DIRSITES/${site}"
+done
