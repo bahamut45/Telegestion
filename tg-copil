@@ -2,8 +2,8 @@
 #set -o nounset
 #set -o verbose
 ######## Declaration des variables ########
-export RTUSER=njoubert
-export RTPASSWD=ninja21
+export RTUSER=xxxxxxxx
+export RTPASSWD=xxxxxxx
 export RTSERVER=https://rt.giprecia.fr/rt/
 
 OPTERR=0 #Permet d'eviter le message d'erreur de getopts
@@ -108,7 +108,7 @@ traitement(){
 total(){
 	echo -e $BLANC"Nombre ticket cree pour toute les files"$NORMAL;	
 	# Total de ticket cree
-	request="Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'" # on créé une variable car on a besoin à plusieurs endroits
+	request="Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'" # on crÃ©Ã© une variable car on a besoin Ã  plusieurs endroits
 	if [ "$debug" == "true" ]; then
 		query="$VERT : Requete => \"$request\""
 	else
@@ -251,7 +251,7 @@ file(){
 queue=$1
 	echo -e $BLANC"Nombre ticket cree pour la file $queue "$NORMAL;	
 	# Total de ticket cree
-	request="Queue = '$queue' AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'" # on créé une variable car on a besoin à plusieurs endroits
+	request="Queue = '$queue' AND Created >='$FIRSTDAYMONTH' AND Created <='$LASTDAYMONTH'" # on crÃ©Ã© une variable car on a besoin Ã  plusieurs endroits
 	if [ "$debug" == "true" ]; then
 		query="$VERT : Requete => \"$request\""
 	else
@@ -389,7 +389,7 @@ queue=$1
 }
 
 
-# Pas de paramètre on lance l'usage
+# Pas de paramÃ¨tre on lance l'usage
 [[ $# -lt 1 ]] && usage && exit 0
 
 # on verifie les options
