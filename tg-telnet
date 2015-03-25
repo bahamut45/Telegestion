@@ -1,14 +1,14 @@
 #!/usr/bin/expect 
 set timeout 20
 set name [lindex $argv 0] 
-#set user [lindex $argv 1]
-#set password [lindex $argv 2]
+set user [lindex $argv 1]
+set password [lindex $argv 2]
 set cmd [lindex $argv 1]
 spawn telnet $name
 expect "Username:" 
-send "proxreg\r"
+send "$user\r"
 expect "Password:"
-send "mepDyShi\r"
+send "$password\r"
 expect "<$name>"
 send "$cmd\r"
 interact 
