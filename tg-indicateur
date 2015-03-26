@@ -1,8 +1,8 @@
 #!/bin/bash 
 
 ######## Declaration des variables ########
-export RTUSER=njoubert
-export RTPASSWD=ninja21
+export RTUSER=xxxxxx
+export RTPASSWD=xxxxxx
 export RTSERVER=https://rt.giprecia.fr/rt/
 
 OPTERR=0 #Permet d'eviter le message d'erreur de getopts
